@@ -1,0 +1,94 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "backend/**"
+      - "requirements*.txt"
+      - "config.yaml"
+      - "alembic/**"
+  pull_request:
+    branches: [master, main]
+    paths:
+      - "backend/**"
+      - "requirements*.txt"
+      - "config.yaml"
+      - "alembic/**"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: stockrec
+          POSTGRES_PASSWORD: stockrec_test
+          POSTGRES_DB: stockrec_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt', 'requirements-dev.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Ruff lint
+        run: ruff check backend/
+
+      - name: Ruff format check
+        run: ruff format --check backend/
+
+      - name: Type check
+        run: mypy backend/ --ignore-missing-imports || true
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://stockrec:stockrec_test@localhost:5432/stockrec_test
+          DATABASE_URL_SYNC: postgresql://stockrec:stockrec_test@localhost:5432/stockrec_test
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: ci-test-secret-key
+        run: pytest backend/tests/ -v --tb=short
+
+  docker-build:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t stockrec-backend -f docker/Dockerfile .
+
+      - name: Verify image
+        run: docker run --rm stockrec-backend python -c "import backend; print('OK')"

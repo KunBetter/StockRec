@@ -1,0 +1,64 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, main]
+    paths:
+      - "backend/**"
+      - "docker/**"
+      - "requirements*.txt"
+      - "config.yaml"
+      - "alembic/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t stockrec-backend:${{ github.sha }} -f docker/Dockerfile .
+
+      - name: Tag image
+        run: |
+          docker tag stockrec-backend:${{ github.sha }} stockrec-backend:latest
+
+      - name: Deploy to ECS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_KEY }}
+          script: |
+            set -e
+
+            # Pull latest code and restart
+            cd /opt/stockrec
+
+            # Backup current DB
+            docker compose exec -T postgres pg_dump -U stockrec stockrec > /opt/backups/stockrec_$(date +%Y%m%d_%H%M%S).sql
+
+            # Pull latest images and restart
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            # Run migrations
+            docker compose exec -T app alembic upgrade head
+
+            # Health check
+            sleep 5
+            curl -f http://localhost:8000/api/v1/health || {
+              echo "Health check failed! Rolling back..."
+              docker compose up -d --rollback
+              exit 1
+            }
+
+            echo "Deploy successful"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "Deploy failed for commit ${{ github.sha }}"
+          echo "Check GitHub Actions logs for details"

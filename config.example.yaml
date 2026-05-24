@@ -1,0 +1,100 @@
+data_sources:
+  baostock:
+    enabled: true
+    timeout_seconds: 30
+    retry_count: 3
+  akshare:
+    enabled: true
+    timeout_seconds: 30
+    retry_count: 2
+  sina:
+    enabled: true
+    timeout_seconds: 10
+    base_url: "http://hq.sinajs.cn"
+  tencent:
+    enabled: true
+    timeout_seconds: 10
+    base_url: "https://qt.gtimg.cn"
+  realtime_order: ["akshare", "sina", "tencent"]
+  history_order: ["baostock", "akshare"]
+
+persistence:
+  database:
+    path: "data/database/stockrec.db"
+    echo_sql: false
+  parquet:
+    base_path: "data/parquet"
+    compression: "snappy"
+  models:
+    path: "data/models"
+
+strategy:
+  stock_universe: "csi300_csi500"
+  layer_weights:
+    layer1_factor: 0.6
+    layer2_ml: 0.3
+    layer3_event: 0.1
+  composite_score_weights:
+    predicted_return: 0.5
+    momentum_score: 0.2
+    quality_score: 0.2
+    sentiment_score: 0.1
+  risk_classification:
+    low_threshold: 30
+    medium_threshold: 60
+  output:
+    top_n: 30
+    max_per_industry_pct: 0.25
+  filters:
+    exclude_st: true
+    exclude_suspended: true
+    exclude_limit_up_down: true
+    min_market_cap_billion: 10
+  factors:
+    momentum_days: [20, 60]
+    volatility_days: 20
+    turnover_days: 20
+
+ai:
+  provider: "deepseek"
+  api_key: "${DEEPSEEK_API_KEY}"
+  base_url: "${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}"
+  model: "deepseek-chat"
+  max_tokens: 2000
+  temperature: 0.3
+  rate_limit:
+    requests_per_minute: 30
+    max_concurrent: 3
+
+scheduler:
+  timezone: "Asia/Shanghai"
+  jobs:
+    hourly_update:
+      enabled: true
+      cron: "0 9-15 * * mon-fri"
+    daily_close:
+      enabled: true
+      cron: "30 15 * * mon-fri"
+    model_retrain:
+      enabled: true
+      cron: "0 16 * * mon-fri"
+    ai_analysis:
+      enabled: true
+      cron: "45 9-15 * * mon-fri"
+    weekly_full_sync:
+      enabled: true
+      cron: "0 8 * * 0"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins:
+    - "http://localhost:5173"
+    - "http://localhost:3000"
+  log_level: "INFO"
+
+logging:
+  level: "INFO"
+  file: "logs/app.log"
+  max_size_mb: 10
+  backup_count: 5

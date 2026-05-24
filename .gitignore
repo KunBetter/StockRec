@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Runtime data
+data/
+logs/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Models
+backend/strategy/layer2_ml/models/*.pkl
+backend/strategy/layer2_ml/models/*.txt
+
+# Frontend / Mobile
+frontend/node_modules/
+frontend/dist/
+mobile/node_modules/
+mobile/ios/Pods/
+mobile/android/.gradle/
+mobile/android/app/build/
+
+# Brainstorming
+.superpowers/
