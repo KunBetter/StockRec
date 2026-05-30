@@ -63,3 +63,11 @@ export interface AnalysisDetail {
   } | null;
   key_metrics: Record<string, unknown> | null;
 }
+
+export interface DataFreshness {
+  status: string;
+  latest_update: string | null;
+  stock_count: number;
+  sources: Record<string, number>;
+  is_realtime: boolean;
+}

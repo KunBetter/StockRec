@@ -1,4 +1,4 @@
-import type { RecommendationsResponse, AnalysisDetail } from "../types/stock";
+import type { RecommendationsResponse, AnalysisDetail, DataFreshness } from "../types/stock";
 
 const BASE = "/api/v1";
 
@@ -120,4 +120,8 @@ export function fetchRecommendationHistory(limit?: number): Promise<HistoryItem[
 }
 export function fetchSystemStatus(): Promise<SystemStatus> {
   return get<SystemStatus>("/profile/status");
+}
+
+export function fetchDataFreshness(): Promise<DataFreshness> {
+  return get<DataFreshness>("/data/freshness");
 }
