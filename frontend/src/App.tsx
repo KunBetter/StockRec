@@ -17,6 +17,7 @@ import type { RecParams } from "./services/api";
 const MarketPage = lazy(() => import("./components/pages/MarketPage"));
 const ProfilePage = lazy(() => import("./components/pages/ProfilePage"));
 const StockAnalysis = lazy(() => import("./components/analysis/StockAnalysis"));
+const AIChatPage = lazy(() => import("./components/chat/AIChatPage"));
 
 function PageLoader() {
   return (
@@ -29,16 +30,6 @@ function PageLoader() {
 }
 
 type Page = "home" | "market" | "profile" | "analysis" | "ai-chat" | "compare";
-
-function AIChatPageDummy({ onBack }: { onBack: () => void }) {
-  return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ background: "#000" }}>
-      <p className="text-white text-lg mb-4">AI 选股问答</p>
-      <p className="text-[#98989D] text-sm mb-4">即将上线...</p>
-      <button onClick={onBack} className="px-4 py-2 bg-[#0A84FF] text-white rounded-xl text-sm">返回</button>
-    </div>
-  );
-}
 
 function ComparePageDummy({ symbols, onBack }: { symbols: string[]; onBack: () => void }) {
   return (
@@ -87,7 +78,11 @@ function App() {
     );
   }
   if (page === "ai-chat") {
-    return <AIChatPageDummy onBack={goHome} />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <AIChatPage onBack={goHome} />
+      </Suspense>
+    );
   }
   if (page === "compare" && compareSymbols.length > 0) {
     return <ComparePageDummy symbols={compareSymbols} onBack={goHome} />;
