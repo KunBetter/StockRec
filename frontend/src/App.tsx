@@ -1,13 +1,16 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, lazy, Suspense } from "react";
 import Header from "./components/layout/Header";
 import TabBar from "./components/layout/TabBar";
 import StatusBar from "./components/layout/StatusBar";
-import RiskTabs from "./components/sections/RiskSection";
-import AnalysisModal from "./components/analysis/AnalysisModal";
+import AIBriefingCard from "./components/home/AIBriefingCard";
+import ViewToggle from "./components/home/ViewToggle";
+import CompactStockCard from "./components/home/CompactStockCard";
+import StarPick from "./components/home/StarPick";
+import StockTable from "./components/home/StockTable";
+import QuickActions from "./components/home/QuickActions";
 import LoadingSkeleton from "./components/common/LoadingSkeleton";
 import ErrorState from "./components/common/ErrorState";
 import EmptyState from "./components/common/EmptyState";
-import PriceRangeSelector, { RANGES } from "./components/common/PriceRangeSelector";
 import { useStocks } from "./hooks/useStocks";
 import type { RecParams } from "./services/api";
 
@@ -24,62 +27,116 @@ function PageLoader() {
   );
 }
 
+type Page = "home" | "market" | "profile" | "analysis" | "ai-chat" | "compare";
+
+function StockAnalysisDummy({ symbol, onBack }: { symbol: string; onBack: () => void }) {
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ background: "#000" }}>
+      <p className="text-white text-lg mb-4">分析页: {symbol}</p>
+      <button onClick={onBack} className="px-4 py-2 bg-[#0A84FF] text-white rounded-xl text-sm">返回</button>
+    </div>
+  );
+}
+
+function AIChatPageDummy({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ background: "#000" }}>
+      <p className="text-white text-lg mb-4">AI 选股问答</p>
+      <p className="text-[#98989D] text-sm mb-4">即将上线...</p>
+      <button onClick={onBack} className="px-4 py-2 bg-[#0A84FF] text-white rounded-xl text-sm">返回</button>
+    </div>
+  );
+}
+
+function ComparePageDummy({ symbols, onBack }: { symbols: string[]; onBack: () => void }) {
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ background: "#000" }}>
+      <p className="text-white text-lg mb-4">对比: {symbols.join(", ")}</p>
+      <p className="text-[#98989D] text-sm mb-4">即将上线...</p>
+      <button onClick={onBack} className="px-4 py-2 bg-[#0A84FF] text-white rounded-xl text-sm">返回</button>
+    </div>
+  );
+}
+
 function App() {
   const [tab, setTab] = useState("recommend");
+  const [page, setPage] = useState<Page>("home");
+  const [viewMode, setViewMode] = useState<"featured" | "list">(() =>
+    (localStorage.getItem("stockrec_view") as "featured" | "list") || "featured"
+  );
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState(0);
+  const [compareSymbols, setCompareSymbols] = useState<string[]>([]);
   const { data, loading, error, refetch } = useStocks();
 
-  const handlePriceChange = useCallback((index: number) => {
-    setPriceRange(index);
-    const range = RANGES[index];
-    refetch({
-      price_min: range.min ?? undefined,
-      price_max: range.max ?? undefined,
-    });
-  }, [refetch]);
+  const allStocks = data?.sections.flatMap(s => s.stocks) ?? [];
+
+  const handleViewChange = (v: "featured" | "list") => {
+    setViewMode(v);
+    localStorage.setItem("stockrec_view", v);
+  };
+
+  const handleStockTap = (symbol: string) => {
+    setSelectedSymbol(symbol);
+    setPage("analysis");
+  };
+
+  const handleCompare = (symbols: string[]) => {
+    setCompareSymbols(symbols);
+    setPage("compare");
+  };
+
+  const goHome = () => setPage("home");
+
+  if (page === "analysis" && selectedSymbol) {
+    return <StockAnalysisDummy symbol={selectedSymbol} onBack={goHome} />;
+  }
+  if (page === "ai-chat") {
+    return <AIChatPageDummy onBack={goHome} />;
+  }
+  if (page === "compare" && compareSymbols.length > 0) {
+    return <ComparePageDummy symbols={compareSymbols} onBack={goHome} />;
+  }
 
   return (
     <>
       <StatusBar />
-
       <div className="phone-content">
         <Header />
 
         {tab === "recommend" && (
           <>
-            <PriceRangeSelector selected={priceRange} onChange={handlePriceChange} />
-
             {loading && <LoadingSkeleton />}
-            {error && <ErrorState message={error} onRetry={() => handlePriceChange(priceRange)} />}
-            {!loading && !error && data && data.sections.length === 0 && <EmptyState />}
-            {!loading && !error && data && data.sections.length > 0 && (
-              <div className="pb-2">
-                <RiskTabs
-                  sections={data.sections}
-                  onStockTap={setSelectedSymbol}
-                />
-              </div>
+            {error && <ErrorState message={error} onRetry={() => refetch()} />}
+            {!loading && !error && allStocks.length === 0 && <EmptyState />}
+            {!loading && !error && allStocks.length > 0 && (
+              <>
+                <AIBriefingCard />
+                <ViewToggle view={viewMode} onChange={handleViewChange} total={allStocks.length} />
+                {viewMode === "featured" ? (
+                  <>
+                    <StarPick stock={allStocks[0]} onTap={handleStockTap} />
+                    {allStocks.slice(1).map((s, i) => (
+                      <CompactStockCard key={s.symbol} stock={s} rank={i + 2} onTap={handleStockTap} />
+                    ))}
+                    <QuickActions onAIChat={() => setPage("ai-chat")} onAnalysis={() => {}} />
+                  </>
+                ) : (
+                  <StockTable stocks={allStocks} onCompare={handleCompare} onTap={handleStockTap} />
+                )}
+              </>
             )}
           </>
         )}
 
         {tab === "market" && (
-          <Suspense fallback={<PageLoader />}>
-            <MarketPage />
-          </Suspense>
+          <Suspense fallback={<PageLoader />}><MarketPage /></Suspense>
         )}
-
         {tab === "profile" && (
-          <Suspense fallback={<PageLoader />}>
-            <ProfilePage />
-          </Suspense>
+          <Suspense fallback={<PageLoader />}><ProfilePage /></Suspense>
         )}
 
         <TabBar active={tab} onChange={setTab} />
       </div>
-
-      <AnalysisModal symbol={selectedSymbol} onClose={() => setSelectedSymbol(null)} />
     </>
   );
 }
