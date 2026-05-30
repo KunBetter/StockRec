@@ -38,6 +38,10 @@ def get_recommendations(
     limit: int = Query(30, ge=10, le=50),
     price_min: Optional[float] = Query(None, description="最低价格"),
     price_max: Optional[float] = Query(None, description="最高价格"),
+    sort_by: Optional[str] = Query(None, description="composite_score, price_change_pct, predicted_return"),
+    sort_order: Optional[str] = Query("desc"),
+    industry: Optional[str] = Query(None),
+    risk_level: Optional[str] = Query(None, description="low, medium, high"),
 ):
     session = get_session()
     try:
@@ -61,9 +65,20 @@ def get_recommendations(
         if price_max is not None:
             query = query.filter(Recommendation.current_price <= price_max)
 
+        if risk_level is not None:
+            query = query.filter(Recommendation.risk_level == risk_level)
+
+        if industry is not None:
+            query = query.join(Stock, Recommendation.symbol == Stock.symbol).filter(Stock.industry == industry)
+
+        sort_col = getattr(Recommendation, sort_by, None) if sort_by else None
+        if sort_col is not None:
+            query = query.order_by(sort_col.desc() if sort_order == "desc" else sort_col.asc())
+        else:
+            query = query.order_by(Recommendation.composite_score.desc())
+
         recs = (
-            query.order_by(Recommendation.composite_score.desc())
-            .limit(limit)
+            query.limit(limit)
             .all()
         )
 
