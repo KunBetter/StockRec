@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from typing import Optional
 
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from backend.api.schemas import (
@@ -12,7 +13,7 @@ from backend.api.schemas import (
     PaginatedResponse,
 )
 from backend.persistence.database import get_session
-from backend.persistence.models import Stock, DailyKlineMetadata, FinancialData, FactorScore
+from backend.persistence.models import Recommendation, Stock, DailyKlineMetadata, FinancialData, FactorScore
 from backend.persistence.parquet_store import ParquetStore
 from backend.persistence.repository import Repository
 
@@ -151,6 +152,55 @@ def get_stock_factors(
             }
             for f in items
         ]
+    finally:
+        session.close()
+
+
+class CompareRequest(BaseModel):
+    symbols: list[str]
+
+
+@router.post("/stocks/compare")
+def compare_stocks(body: CompareRequest, request: Request):
+    session = get_session()
+    try:
+        latest = session.query(Recommendation.trade_date).order_by(Recommendation.trade_date.desc()).first()
+        trade_date = str(latest[0]) if latest else str(date.today())
+
+        columns = []
+        for symbol in body.symbols:
+            rec = session.query(Recommendation).filter(
+                Recommendation.symbol == symbol, Recommendation.trade_date == trade_date
+            ).first()
+            stock = session.query(Stock).filter(Stock.symbol == symbol).first()
+            if not rec:
+                continue
+
+            metrics = {
+                "composite_score": rec.composite_score,
+                "predicted_return": rec.predicted_return,
+                "momentum_score": rec.momentum_score,
+                "quality_score": rec.quality_score,
+                "sentiment_score": rec.sentiment_score,
+                "current_price": rec.current_price,
+                "price_change_pct": rec.price_change_pct,
+                "pe": None, "roe": None, "dividend_yield": None,
+                "market_cap": rec.market_cap,
+                "risk_level": rec.risk_level,
+            }
+            columns.append({
+                "symbol": symbol,
+                "name": stock.name if stock else symbol,
+                "metrics": metrics,
+            })
+
+        verdict = None
+        if len(columns) >= 2:
+            names_scores = [(c["name"], c["metrics"]["composite_score"]) for c in columns]
+            best = max(names_scores, key=lambda x: x[1] or 0)
+            verdict = f"综合评分最高的是{best[0]}（{best[1]:.0f}分）。"
+
+        return {"columns": columns, "ai_verdict": verdict}
     finally:
         session.close()
 
