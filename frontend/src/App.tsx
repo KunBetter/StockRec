@@ -16,6 +16,7 @@ import type { RecParams } from "./services/api";
 
 const MarketPage = lazy(() => import("./components/pages/MarketPage"));
 const ProfilePage = lazy(() => import("./components/pages/ProfilePage"));
+const StockAnalysis = lazy(() => import("./components/analysis/StockAnalysis"));
 
 function PageLoader() {
   return (
@@ -28,15 +29,6 @@ function PageLoader() {
 }
 
 type Page = "home" | "market" | "profile" | "analysis" | "ai-chat" | "compare";
-
-function StockAnalysisDummy({ symbol, onBack }: { symbol: string; onBack: () => void }) {
-  return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ background: "#000" }}>
-      <p className="text-white text-lg mb-4">分析页: {symbol}</p>
-      <button onClick={onBack} className="px-4 py-2 bg-[#0A84FF] text-white rounded-xl text-sm">返回</button>
-    </div>
-  );
-}
 
 function AIChatPageDummy({ onBack }: { onBack: () => void }) {
   return (
@@ -88,7 +80,11 @@ function App() {
   const goHome = () => setPage("home");
 
   if (page === "analysis" && selectedSymbol) {
-    return <StockAnalysisDummy symbol={selectedSymbol} onBack={goHome} />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <StockAnalysis symbol={selectedSymbol!} onBack={goHome} />
+      </Suspense>
+    );
   }
   if (page === "ai-chat") {
     return <AIChatPageDummy onBack={goHome} />;
