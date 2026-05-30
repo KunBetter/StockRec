@@ -131,6 +131,55 @@ def get_recommendations(
         session.close()
 
 
+@router.get("/recommendations/briefing")
+def get_briefing(request: Request):
+    session = get_session()
+    try:
+        latest = (
+            session.query(Recommendation.trade_date)
+            .order_by(Recommendation.trade_date.desc())
+            .first()
+        )
+        trade_date = str(latest[0]) if latest else str(date.today())
+
+        recs = (
+            session.query(Recommendation)
+            .filter(Recommendation.trade_date == trade_date)
+            .order_by(Recommendation.composite_score.desc())
+            .limit(10)
+            .all()
+        )
+
+        top_names = []
+        top_industries = set()
+        for rec in recs:
+            s = session.query(Stock).filter(Stock.symbol == rec.symbol).first()
+            if s:
+                top_names.append(s.name)
+                if s.industry:
+                    top_industries.add(s.industry)
+
+        low_count = sum(1 for r in recs if r.risk_level == "low")
+
+        template = (
+            f"大盘选股信号更新：今日共追踪{len(recs)}只标的，"
+            f"其中低风险{low_count}只。"
+            f"资金重点关注{', '.join(list(top_industries)[:4])}等板块。"
+            f"AI精选TOP3：{', '.join(top_names[:3])}，"
+            f"综合评分领先，防御属性突出。"
+        )
+
+        return {
+            "date": trade_date,
+            "generated_at": datetime.utcnow().isoformat(),
+            "summary": template,
+            "highlights": list(top_industries)[:4],
+            "market_mood": "偏谨慎" if low_count >= len(recs) // 2 else "中性",
+        }
+    finally:
+        session.close()
+
+
 @router.get("/recommendations/{symbol}")
 def get_recommendation_detail(symbol: str, target_date: Optional[str] = None, request: Request = None):
     session = get_session()
