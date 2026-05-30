@@ -1,4 +1,5 @@
 import { useState, lazy, Suspense } from "react";
+import FilterPanel from "./components/filter/FilterPanel";
 import Header from "./components/layout/Header";
 import TabBar from "./components/layout/TabBar";
 import StatusBar from "./components/layout/StatusBar";
@@ -40,6 +41,7 @@ function App() {
   );
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [compareSymbols, setCompareSymbols] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
   const { data, loading, error, refetch } = useStocks();
 
   const allStocks = data?.sections.flatMap(s => s.stocks) ?? [];
@@ -97,7 +99,14 @@ function App() {
             {!loading && !error && allStocks.length > 0 && (
               <>
                 <AIBriefingCard />
-                <ViewToggle view={viewMode} onChange={handleViewChange} total={allStocks.length} />
+                <div className="flex items-center px-4 mb-3">
+                  <ViewToggle view={viewMode} onChange={handleViewChange} total={allStocks.length} />
+                  <button onClick={() => setFilterOpen(true)}
+                    className="ml-auto px-3 py-1.5 rounded-lg text-[10px] font-medium"
+                    style={{ background: "rgba(118,118,128,0.16)", color: "#8E8E93" }}>
+                    筛选 ▾
+                  </button>
+                </div>
                 {viewMode === "featured" ? (
                   <>
                     <StarPick stock={allStocks[0]} onTap={handleStockTap} />
@@ -123,6 +132,11 @@ function App() {
 
         <TabBar active={tab} onChange={setTab} />
       </div>
+
+      <FilterPanel open={filterOpen} onClose={() => setFilterOpen(false)}
+        onApply={(params) => {
+          refetch(params as RecParams);
+        }} />
     </>
   );
 }
