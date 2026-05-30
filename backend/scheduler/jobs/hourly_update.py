@@ -1,12 +1,13 @@
 import logging
 import json
+import asyncio
 from datetime import date, datetime
 
 from backend.config import AppConfig
 from backend.data.data_orchestrator import DataOrchestrator
 from backend.persistence.database import get_session
 from backend.persistence.models import Stock, Recommendation
-from backend.persistence.redis_client import cache_set_json, cache_get_json
+from backend.persistence.redis_client import cache_set_json
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,9 @@ def run_hourly_update(config: AppConfig) -> int:
             stock = session.query(Stock).filter(Stock.symbol == symbol).first()
             if stock:
                 stock.last_price_update = now
-                stock.data_source = "akshare"
+            # TODO: DataOrchestrator should expose which source provided the data
+            # Currently hardcoded to "akshare" since it's the primary realtime source
+            stock.data_source = "akshare"
 
             existing = session.query(Recommendation).filter(
                 Recommendation.symbol == symbol, Recommendation.trade_date == today
@@ -74,13 +77,12 @@ def run_hourly_update(config: AppConfig) -> int:
         session.commit()
 
         # Cache to Redis (fire and forget — ok if Redis is down)
-        import asyncio
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.ensure_future(cache_set_json(REALTIME_CACHE_KEY, price_data, REALTIME_CACHE_TTL))
-            else:
+            loop = asyncio.new_event_loop()
+            try:
                 loop.run_until_complete(cache_set_json(REALTIME_CACHE_KEY, price_data, REALTIME_CACHE_TTL))
+            finally:
+                loop.close()
         except Exception:
             pass
 
