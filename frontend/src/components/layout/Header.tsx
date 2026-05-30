@@ -1,20 +1,79 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { fetchDataFreshness, type DataFreshness } from "../../services/api";
 
-export default function Header() {
-  const [freshness, setFreshness] = useState<DataFreshness | null>(null);
-
-  useEffect(() => {
-    fetchDataFreshness().then(setFreshness).catch(() => {});
-    const t = setInterval(() => fetchDataFreshness().then(setFreshness).catch(() => {}), 60000);
-    return () => clearInterval(t);
-  }, []);
-
-  const isLive = freshness?.is_realtime;
-  const updateTime = freshness?.latest_update
+function getStatusLabel(freshness: DataFreshness | null, loading: boolean): { dotClass: string; text: string; bgColor: string; textColor: string } {
+  if (loading) {
+    return {
+      dotClass: "w-1.5 h-1.5 rounded-full bg-[#636366]",
+      text: "加载中...",
+      bgColor: "rgba(118,118,128,0.12)",
+      textColor: "#8E8E93",
+    };
+  }
+  if (!freshness) {
+    return {
+      dotClass: "w-1.5 h-1.5 rounded-full bg-[#636366]",
+      text: "无数据",
+      bgColor: "rgba(118,118,128,0.12)",
+      textColor: "#8E8E93",
+    };
+  }
+  const updateTime = freshness.latest_update
     ? new Date(freshness.latest_update).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })
     : null;
+  if (freshness.is_realtime && updateTime) {
+    return {
+      dotClass: "w-1.5 h-1.5 rounded-full bg-[#30D158] animate-pulse",
+      text: `实时 · ${updateTime}`,
+      bgColor: "rgba(48,209,88,0.12)",
+      textColor: "var(--green)",
+    };
+  }
+  if (updateTime) {
+    return {
+      dotClass: "w-1.5 h-1.5 rounded-full bg-[#FF9F0A]",
+      text: `收盘 · ${updateTime}`,
+      bgColor: "rgba(255,159,10,0.12)",
+      textColor: "var(--orange)",
+    };
+  }
+  return {
+    dotClass: "w-1.5 h-1.5 rounded-full bg-[#636366]",
+    text: "等待数据",
+    bgColor: "rgba(118,118,128,0.12)",
+    textColor: "#8E8E93",
+  };
+}
+
+export default function Header() {
+  const [freshness, setFreshness] = useState<DataFreshness | null>(null);
+  const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchDataFreshness();
+      if (mountedRef.current) {
+        setFreshness(data);
+        setLoading(false);
+      }
+    } catch {
+      if (mountedRef.current) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    load();
+    const t = setInterval(load, 60000);
+    return () => {
+      mountedRef.current = false;
+      clearInterval(t);
+    };
+  }, [load]);
+
+  const status = getStatusLabel(freshness, loading);
 
   return (
     <motion.header
@@ -38,12 +97,9 @@ export default function Header() {
           </span>
         </div>
         <div className="flex items-center gap-2 px-3 py-2 rounded-full text-[12px] font-medium"
-          style={{
-            background: isLive ? "rgba(48,209,88,0.12)" : "rgba(255,159,10,0.12)",
-            color: isLive ? "var(--green)" : "var(--orange)",
-          }}>
-          <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-[#30D158] animate-pulse" : "bg-[#FF9F0A]"}`} />
-          {isLive && updateTime ? `实时 · ${updateTime}` : updateTime ? `收盘 · ${updateTime}` : "等待数据"}
+          style={{ background: status.bgColor, color: status.textColor }}>
+          <span className={status.dotClass} />
+          {status.text}
         </div>
       </div>
       <p className="m-0 mt-1 text-[13px] text-[#98989D]">AI深度选股 · 如鲸探宝</p>
