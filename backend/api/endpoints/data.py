@@ -1,6 +1,6 @@
-from datetime import date, datetime
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 
 from backend.persistence.database import get_session
 from backend.persistence.models import Stock
@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.get("/data/freshness")
-def get_data_freshness(request: Request):
+def get_data_freshness():
     session = get_session()
     try:
         stocks = session.query(Stock).filter(Stock.status == "active").all()
@@ -27,10 +27,10 @@ def get_data_freshness(request: Request):
 
         return {
             "status": "ok",
-            "latest_update": latest_update.isoformat() if latest_update else None,
+            "latest_update": latest_update.replace(tzinfo=timezone.utc).isoformat() if latest_update else None,
             "stock_count": len(stocks),
             "sources": sources,
-            "is_realtime": latest_update is not None and (datetime.utcnow() - latest_update).total_seconds() < 3600,
+            "is_realtime": latest_update is not None and (datetime.now(timezone.utc) - latest_update.replace(tzinfo=timezone.utc)).total_seconds() < 3600,
         }
     finally:
         session.close()
