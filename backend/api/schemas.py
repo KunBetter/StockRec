@@ -118,6 +118,7 @@ class AnalysisResponse(BaseModel):
     layer_scores: Optional[dict] = None
     ai_analysis: Optional[dict] = None
     key_metrics: Optional[dict] = None
+    peer_rank: Optional[dict] = None
 
 
 class HealthResponse(BaseModel):

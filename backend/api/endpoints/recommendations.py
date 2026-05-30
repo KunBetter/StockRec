@@ -195,6 +195,47 @@ def get_briefing(request: Request):
         session.close()
 
 
+@router.get("/recommendations/{symbol}/peers")
+def get_peers(symbol: str):
+    session = get_session()
+    try:
+        stock = session.query(Stock).filter(Stock.symbol == symbol).first()
+        if not stock:
+            raise HTTPException(status_code=404, detail="Stock not found")
+
+        industry = stock.industry
+        if not industry:
+            return {"symbol": symbol, "peers": []}
+
+        latest = session.query(Recommendation.trade_date).order_by(Recommendation.trade_date.desc()).first()
+        trade_date = str(latest[0]) if latest else str(date.today())
+
+        peer_stocks = session.query(Stock).filter(Stock.industry == industry, Stock.symbol != symbol).all()
+        peer_symbols = [p.symbol for p in peer_stocks]
+
+        recs = (
+            session.query(Recommendation)
+            .filter(Recommendation.symbol.in_(peer_symbols), Recommendation.trade_date == trade_date)
+            .order_by(Recommendation.composite_score.desc())
+            .all()
+        )
+
+        peers = []
+        for rec in recs:
+            rs = session.query(Stock).filter(Stock.symbol == rec.symbol).first()
+            peers.append({
+                "symbol": rec.symbol,
+                "name": rs.name if rs else rec.symbol,
+                "industry": industry,
+                "composite_score": rec.composite_score,
+                "pe": None, "roe": None,
+            })
+
+        return {"symbol": symbol, "peers": peers}
+    finally:
+        session.close()
+
+
 @router.get("/recommendations/{symbol}")
 def get_recommendation_detail(symbol: str, target_date: Optional[str] = None, request: Request = None):
     session = get_session()

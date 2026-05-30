@@ -78,6 +78,20 @@ def get_analysis(symbol: str, target_date: Optional[str] = None, request: Reques
                 "contribution": rec.sentiment_score * cw["sentiment_score"],
             }
 
+        peer_rank_data = None
+        if s and s.industry:
+            latest_date = rec.trade_date
+            all_industry_recs = (
+                session.query(Recommendation)
+                .join(Stock, Recommendation.symbol == Stock.symbol)
+                .filter(Stock.industry == s.industry, Recommendation.trade_date == latest_date)
+                .order_by(Recommendation.composite_score.desc())
+                .all()
+            )
+            rank_in_industry = next((i + 1 for i, r in enumerate(all_industry_recs) if r.symbol == symbol), None)
+            if rank_in_industry is not None:
+                peer_rank_data = {"rank": rank_in_industry, "total": len(all_industry_recs)}
+
         return AnalysisResponse(
             symbol=symbol,
             name=stock_name,
@@ -102,7 +116,9 @@ def get_analysis(symbol: str, target_date: Optional[str] = None, request: Reques
                 "quality_score": rec.quality_score,
                 "sentiment_score": rec.sentiment_score,
                 "risk_level": rec.risk_level,
+                "pe": None, "roe": None, "dividend_yield": None,
             },
+            peer_rank=peer_rank_data,
         ).model_dump()
     finally:
         session.close()
