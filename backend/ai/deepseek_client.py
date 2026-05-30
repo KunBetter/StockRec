@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 from openai import AsyncOpenAI
 
@@ -44,6 +44,27 @@ class DeepSeekClient:
             except Exception as e:
                 logger.error(f"DeepSeek API error: {e}")
                 return None
+
+    async def chat_stream(self, messages: list[dict], **kwargs) -> AsyncIterator[str]:
+        async with self._semaphore:
+            elapsed = datetime.utcnow().timestamp() - self._last_call_time
+            if elapsed < self._min_interval:
+                await asyncio.sleep(self._min_interval - elapsed)
+            try:
+                stream = await self.client.chat.completions.create(
+                    model=kwargs.get("model", self.model),
+                    messages=messages,
+                    max_tokens=kwargs.get("max_tokens", self.max_tokens),
+                    temperature=kwargs.get("temperature", self.temperature),
+                    stream=True,
+                )
+                async for chunk in stream:
+                    if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                        yield chunk.choices[0].delta.content
+                self._last_call_time = datetime.utcnow().timestamp()
+            except Exception as e:
+                logger.error(f"DeepSeek stream error: {e}")
+                yield ""
 
     async def analyze_json(self, messages: list[dict], **kwargs) -> Optional[str]:
         messages_with_format = messages.copy()
