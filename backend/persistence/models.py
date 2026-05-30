@@ -52,6 +52,8 @@ class Stock(Base):
     list_date = Column(Date)
     is_st = Column(Boolean, default=False)
     is_suspended = Column(Boolean, default=False)
+    last_price_update = Column(DateTime)
+    data_source = Column(String(20))
     status = Column(String(20), default="active")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
