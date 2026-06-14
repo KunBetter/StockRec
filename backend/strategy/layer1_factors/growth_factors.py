@@ -9,7 +9,7 @@ class RevenueGrowthFactor(BaseFactor):
     category = "growth"
     depends_on = ["revenue"]
 
-    def compute(self, df: pd.DataFrame, revenue: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, revenue: pd.Series = None, **kwargs) -> pd.Series:
         if revenue is not None:
             rev = revenue.replace(0, np.nan)
             growth = rev.pct_change(periods=4) if isinstance(revenue, pd.Series) else pd.Series(np.nan)
@@ -23,7 +23,7 @@ class ProfitGrowthFactor(BaseFactor):
     category = "growth"
     depends_on = ["net_profit_parent"]
 
-    def compute(self, df: pd.DataFrame, net_profit: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, net_profit: pd.Series = None, **kwargs) -> pd.Series:
         if net_profit is not None:
             profit = net_profit.replace(0, np.nan)
             growth = profit.pct_change(periods=4) if isinstance(net_profit, pd.Series) else pd.Series(np.nan)
@@ -37,7 +37,7 @@ class RdRatioFactor(BaseFactor):
     category = "growth"
     depends_on = ["rd_expense", "revenue"]
 
-    def compute(self, df: pd.DataFrame, rd_expense: pd.Series = None, revenue: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, rd_expense: pd.Series = None, revenue: pd.Series = None, **kwargs) -> pd.Series:
         if rd_expense is not None and revenue is not None:
             ratio = rd_expense / revenue.replace(0, np.nan)
         else:

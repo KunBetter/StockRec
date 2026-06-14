@@ -55,8 +55,12 @@ def main():
 
     for i, stock in enumerate(stocks):
         try:
-            print(f"[{i+1}/{len(stocks)}] Fetching {stock.symbol} ({stock.name})...")
-            df = orch.fetch_daily_kline(stock.symbol, args.start, end_date)
+            # Normalize symbol: sh600036 -> sh.600036
+            sym = stock.symbol
+            if "." not in sym and len(sym) >= 8:
+                sym = sym[:2] + "." + sym[2:]
+            print(f"[{i+1}/{len(stocks)}] Fetching {sym} ({stock.name})...")
+            df = orch.fetch_daily_kline(sym, args.start, end_date)
             if df.empty:
                 print(f"  -> No data")
                 continue

@@ -19,9 +19,18 @@ class EventScorer:
         dividend_yield: float = None,
         has_buyback: bool = False,
     ) -> float:
-        earnings_score = self.earnings.detect(financial_data)
-        dividend_score = self.dividend.detect(dividend_yield)
-        buyback_score = self.buyback.detect(has_buyback)
+        try:
+            earnings_score = self.earnings.detect(financial_data)
+        except Exception:
+            earnings_score = 0.0
+        try:
+            dividend_score = self.dividend.detect(dividend_yield)
+        except Exception:
+            dividend_score = 0.0
+        try:
+            buyback_score = self.buyback.detect(has_buyback)
+        except Exception:
+            buyback_score = 0.0
 
         weights = {"earnings": 0.6, "dividend": 0.3, "buyback": 0.1}
         final = (

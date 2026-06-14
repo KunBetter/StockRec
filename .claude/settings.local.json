@@ -56,7 +56,32 @@
       "Bash(wait)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(git *)",
+      "Bash(.venv/bin/pip list *)",
+      "Bash(python3 *)",
+      "Bash(.venv/bin/python3 *)",
+      "Bash(curl -s http://localhost:8000/api/v1/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Skill(document-skills:webapp-testing)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(.venv/bin/alembic revision *)",
+      "Bash(DATABASE_URL_SYNC=\"sqlite:///$\\(pwd\\)/data/database/stockrec.db\" .venv/bin/alembic revision --autogenerate -m \"add_stock_data_freshness\")",
+      "Bash(DATABASE_URL_SYNC=\"sqlite:///$\\(pwd\\)/data/database/stockrec.db\" .venv/bin/alembic upgrade head)",
+      "Skill(superpowers:requesting-code-review)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(curl -s http://localhost:8000/api/v1/data/freshness)",
+      "Bash(curl -s http://localhost:8000/api/v1/recommendations/briefing)",
+      "Bash(curl -s http://localhost:8000/api/v1/recommendations?sort_by=price_change_pct\\\\&sort_order=desc\\\\&limit=5)",
+      "Bash(curl -s 'http://localhost:8000/api/v1/recommendations?sort_by=price_change_pct&sort_order=desc&limit=5')",
+      "Bash(curl -s 'http://localhost:8000/api/v1/recommendations?sort_by=price_change_pct&sort_order=desc&limit=10')",
+      "Bash(curl -s http://localhost:8000/api/v1/recommendations/sh600036/peers)",
+      "Bash(curl -s http://localhost:8000/api/v1/analysis/sh600036)",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/stocks/compare -H \"Content-Type: application/json\" -d '{\"symbols\":[\"sh600036\",\"sz002415\"]}')",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "Bash(.venv/bin/pytest backend/tests/ -v --tb=short)",
+      "Bash(pip3 list *)"
     ]
   }
 }

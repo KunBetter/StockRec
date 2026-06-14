@@ -9,7 +9,7 @@ class ROEFactor(BaseFactor):
     category = "quality"
     depends_on = ["net_profit_parent", "net_assets"]
 
-    def compute(self, df: pd.DataFrame, net_profit: pd.Series = None, net_assets: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, net_profit: pd.Series = None, net_assets: pd.Series = None, **kwargs) -> pd.Series:
         if net_profit is not None and net_assets is not None:
             roe = net_profit / net_assets.replace(0, np.nan)
         else:
@@ -22,7 +22,7 @@ class ROAFactor(BaseFactor):
     category = "quality"
     depends_on = ["net_profit_parent", "total_assets"]
 
-    def compute(self, df: pd.DataFrame, net_profit: pd.Series = None, total_assets: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, net_profit: pd.Series = None, total_assets: pd.Series = None, **kwargs) -> pd.Series:
         if net_profit is not None and total_assets is not None:
             roa = net_profit / total_assets.replace(0, np.nan)
         else:
@@ -35,7 +35,7 @@ class GrossMarginFactor(BaseFactor):
     category = "quality"
     depends_on = ["revenue", "operating_cost"]
 
-    def compute(self, df: pd.DataFrame, revenue: pd.Series = None, operating_cost: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, revenue: pd.Series = None, operating_cost: pd.Series = None, **kwargs) -> pd.Series:
         if revenue is not None and operating_cost is not None:
             margin = (revenue - operating_cost) / revenue.replace(0, np.nan)
         else:
@@ -48,7 +48,7 @@ class AssetTurnoverFactor(BaseFactor):
     category = "quality"
     depends_on = ["revenue", "total_assets"]
 
-    def compute(self, df: pd.DataFrame, revenue: pd.Series = None, total_assets: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, revenue: pd.Series = None, total_assets: pd.Series = None, **kwargs) -> pd.Series:
         if revenue is not None and total_assets is not None:
             turnover = revenue / total_assets.replace(0, np.nan)
         else:

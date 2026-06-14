@@ -143,6 +143,7 @@ class JobConfig(BaseModel):
 class SchedulerJobsConfig(BaseModel):
     hourly_update: JobConfig = JobConfig()
     daily_close: JobConfig = JobConfig()
+    strategy_scoring: JobConfig = JobConfig()
     model_retrain: JobConfig = JobConfig()
     ai_analysis: JobConfig = JobConfig()
     weekly_full_sync: JobConfig = JobConfig()

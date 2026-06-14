@@ -95,6 +95,18 @@ class JobScheduler:
             )
             logger.info(f"Registered ai_analysis job: {job_cfg.cron}")
 
+    def register_strategy_scoring(self, job_func):
+        job_cfg = self.config.scheduler.jobs.strategy_scoring
+        if job_cfg.enabled:
+            self._scheduler.add_job(
+                self._wrap_job("strategy_scoring", job_func),
+                CronTrigger.from_crontab(job_cfg.cron),
+                id="strategy_scoring",
+                name="Strategy Scoring Engine",
+                replace_existing=True,
+            )
+            logger.info(f"Registered strategy_scoring job: {job_cfg.cron}")
+
     def register_weekly_sync(self, job_func):
         job_cfg = self.config.scheduler.jobs.weekly_full_sync
         if job_cfg.enabled:

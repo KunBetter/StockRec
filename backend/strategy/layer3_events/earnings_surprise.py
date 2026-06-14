@@ -6,8 +6,8 @@ logger = logging.getLogger(__name__)
 
 
 class EarningsSurpriseDetector:
-    def detect(self, financial_data: pd.DataFrame) -> float:
-        if financial_data.empty:
+    def detect(self, financial_data: pd.DataFrame = None) -> float:
+        if financial_data is None or financial_data.empty:
             return 0.0
 
         if "net_profit_parent" not in financial_data.columns:

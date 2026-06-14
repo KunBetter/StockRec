@@ -86,16 +86,19 @@ class StrategyEngine:
                 layer1_score = self.factor_pipeline.compute_composite_score(factors)
                 all_scores[symbol] = {"layer1_factor": layer1_score}
 
-                # Store factor scores
+                # Store factor scores (upsert to allow re-runs on same date)
                 factor_repo = Repository(session, FactorScore)
                 for fname, info in factors.items():
-                    factor_repo.create(
-                        symbol=symbol,
-                        calc_date=target_date,
-                        factor_name=fname,
-                        raw_value=info.get("raw_value"),
-                        z_score=info.get("z_score"),
-                        percentile=info.get("percentile"),
+                    factor_repo.upsert(
+                        unique_keys={"symbol": symbol, "calc_date": target_date, "factor_name": fname},
+                        data={
+                            "symbol": symbol,
+                            "calc_date": target_date,
+                            "factor_name": fname,
+                            "raw_value": info.get("raw_value"),
+                            "z_score": info.get("z_score"),
+                            "percentile": info.get("percentile"),
+                        },
                     )
 
             # Layer 2: ML predictions

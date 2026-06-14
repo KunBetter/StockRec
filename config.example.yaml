@@ -75,9 +75,12 @@ scheduler:
     daily_close:
       enabled: true
       cron: "30 15 * * mon-fri"
+    strategy_scoring:
+      enabled: true
+      cron: "15 16 * * mon-fri"
     model_retrain:
       enabled: true
-      cron: "0 16 * * mon-fri"
+      cron: "30 16 * * mon-fri"
     ai_analysis:
       enabled: true
       cron: "45 9-15 * * mon-fri"

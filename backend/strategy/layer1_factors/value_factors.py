@@ -9,7 +9,7 @@ class EPFactor(BaseFactor):
     category = "value"
     depends_on = ["close", "market_cap", "net_profit_parent"]
 
-    def compute(self, df: pd.DataFrame, market_cap: pd.Series = None, net_profit: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, market_cap: pd.Series = None, net_profit: pd.Series = None, **kwargs) -> pd.Series:
         if net_profit is not None and market_cap is not None:
             ep = net_profit / market_cap
         else:
@@ -22,7 +22,7 @@ class BPFactor(BaseFactor):
     category = "value"
     depends_on = ["close", "market_cap", "net_assets"]
 
-    def compute(self, df: pd.DataFrame, market_cap: pd.Series = None, net_assets: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, market_cap: pd.Series = None, net_assets: pd.Series = None, **kwargs) -> pd.Series:
         if net_assets is not None and market_cap is not None:
             bp = net_assets / market_cap
         else:
@@ -35,7 +35,7 @@ class SPFactor(BaseFactor):
     category = "value"
     depends_on = ["close", "market_cap", "revenue"]
 
-    def compute(self, df: pd.DataFrame, market_cap: pd.Series = None, revenue: pd.Series = None) -> pd.Series:
+    def compute(self, df: pd.DataFrame, market_cap: pd.Series = None, revenue: pd.Series = None, **kwargs) -> pd.Series:
         if revenue is not None and market_cap is not None:
             sp = revenue / market_cap
         else:

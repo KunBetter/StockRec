@@ -42,8 +42,10 @@ async def lifespan(app: FastAPI):
     from backend.scheduler.jobs.weekly_full_sync import run_weekly_sync
     from backend.scheduler.jobs.model_retrain import run_model_retrain
     from backend.scheduler.jobs.ai_analysis_job import run_ai_analysis
+    from backend.scheduler.jobs.run_strategy import run_strategy_scoring
     scheduler.register_hourly_update(run_hourly_update)
     scheduler.register_daily_close(run_daily_close)
+    scheduler.register_strategy_scoring(run_strategy_scoring)
     scheduler.register_weekly_sync(run_weekly_sync)
     scheduler.register_model_retrain(run_model_retrain)
     scheduler.register_ai_analysis(run_ai_analysis)
