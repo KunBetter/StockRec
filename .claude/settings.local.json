@@ -81,7 +81,17 @@
       "Bash(curl -s -X POST http://localhost:8000/api/v1/stocks/compare -H \"Content-Type: application/json\" -d '{\"symbols\":[\"sh600036\",\"sz002415\"]}')",
       "Skill(superpowers:finishing-a-development-branch)",
       "Bash(.venv/bin/pytest backend/tests/ -v --tb=short)",
-      "Bash(pip3 list *)"
+      "Bash(pip3 list *)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/**)",
+      "Bash(xargs kill -9)",
+      "Bash(curl -s --max-time 10 http://localhost:8000/api/v1/health)",
+      "Bash(curl -s --max-time 5 http://localhost:5173)",
+      "Bash(open *)",
+      "Bash(curl -s http://localhost:8000/api/v1/recommendations)",
+      "Bash(curl -s --max-time 3 http://localhost:5173)",
+      "Bash(curl -s --max-time 3 http://localhost:5173/api/v1/recommendations)",
+      "Bash(curl -s --max-time 15 http://localhost:8000/api/v1/market/overview)"
     ]
   }
 }
