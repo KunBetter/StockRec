@@ -7,8 +7,8 @@ build/
 .venv/
 venv/
 
-# Runtime data
-data/
+# Runtime data (only root-level data/ dir, NOT backend/data/)
+/data/
 logs/
 
 # Environment

@@ -51,9 +51,8 @@ def run_hourly_update(config: AppConfig) -> int:
             stock = session.query(Stock).filter(Stock.symbol == symbol).first()
             if stock:
                 stock.last_price_update = now
-            # TODO: DataOrchestrator should expose which source provided the data
-            # Currently hardcoded to "akshare" since it's the primary realtime source
-            stock.data_source = "akshare"
+                # TODO: DataOrchestrator should expose which source provided the data
+                stock.data_source = "akshare"
 
             existing = session.query(Recommendation).filter(
                 Recommendation.symbol == symbol, Recommendation.trade_date == today

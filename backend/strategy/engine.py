@@ -111,18 +111,18 @@ class StrategyEngine:
                     all_scores[symbol] = {}
                 all_scores[symbol]["layer2_ml"] = ml_score
 
-            # Layer 3: Event scores
-            for symbol in symbol_list:
+            # Layer 3: Event scores (only for stocks with kline data)
+            for symbol, df in kline_by_symbol.items():
                 event_score = self.event_scorer.score()
                 if symbol not in all_scores:
                     all_scores[symbol] = {}
                 all_scores[symbol]["layer3_event"] = event_score
 
-            # Merge and composite scoring
+            # Merge and composite scoring (only stocks with kline data)
             rec_repo = Repository(session, Recommendation)
             recommendations = []
 
-            for symbol in symbol_list:
+            for symbol in kline_by_symbol:
                 scores = all_scores.get(symbol, {})
                 if not scores:
                     continue
@@ -136,6 +136,13 @@ class StrategyEngine:
 
                 df = kline_by_symbol.get(symbol)
                 current_price = float(df["close"].iloc[-1]) if df is not None and not df.empty else 0
+                # Compute daily price change from kline (close vs preclose)
+                pct_change = 0.0
+                if df is not None and not df.empty and "close" in df.columns and "preclose" in df.columns:
+                    last_close = df["close"].iloc[-1]
+                    last_preclose = df["preclose"].iloc[-1]
+                    if last_preclose and last_preclose > 0:
+                        pct_change = float((last_close - last_preclose) / last_preclose * 100)
 
                 momentum = self._compute_momentum_score(df) if df is not None else 50
                 quality = scores.get("layer1_factor", 50)
@@ -166,6 +173,9 @@ class StrategyEngine:
                 )
                 risk_level = self.risk_classifier.classify(risk)
 
+                holding_map = {"low": "中长期", "medium": "中短期", "high": "短期"}
+                holding_period = holding_map.get(risk_level, "中短期")
+
                 rec_data = {
                     "symbol": symbol,
                     "trade_date": target_date,
@@ -180,6 +190,8 @@ class StrategyEngine:
                     "risk_level": risk_level,
                     "risk_score": risk,
                     "current_price": current_price,
+                    "price_change_pct": pct_change,
+                    "holding_period": holding_period,
                 }
 
                 # Preserve existing AI analysis data

@@ -30,7 +30,7 @@ export default function StarPick({ stock, onTap }: StarPickProps) {
           <span className="text-[15px] font-bold">{stock.name}</span>
           <span className="text-[10px] text-[#8E8E93] ml-2">{stock.symbol} · {stock.industry || ""}</span>
           <div className="flex gap-3 mt-1">
-            <span className="text-[9px] text-[#636366]">PE <b className="text-[#C7C7CC]">{stock.pe ?? "-"}</b></span>
+            <span className="text-[9px] text-[#636366]">PE <b className="text-[#C7C7CC]">{stock.pe?.toFixed(1) ?? "-"}</b></span>
             <span className="text-[9px] text-[#636366]">ROE <b className="text-[#C7C7CC]">{stock.roe?.toFixed(1) ?? "-"}%</b></span>
             <span className="text-[9px] text-[#636366]">股息率 <b className="text-[#C7C7CC]">{stock.dividend_yield?.toFixed(1) ?? "-"}%</b></span>
           </div>

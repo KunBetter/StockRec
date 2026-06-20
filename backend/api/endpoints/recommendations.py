@@ -10,7 +10,7 @@ from backend.api.schemas import (
     MarketSummary,
 )
 from backend.persistence.database import get_session
-from backend.persistence.models import Recommendation, Stock
+from backend.persistence.models import Recommendation, Stock, MarketIndex
 
 router = APIRouter()
 
@@ -90,12 +90,31 @@ def get_recommendations(
                 sections=[],
             ).model_dump()
 
-        # Enrich with stock names
-        stock_repo = {}
+        # Enrich with stock names and metadata
+        stock_info = {}
         for rec in recs:
-            if rec.symbol not in stock_repo:
+            if rec.symbol not in stock_info:
                 s = session.query(Stock).filter(Stock.symbol == rec.symbol).first()
-                stock_repo[rec.symbol] = s.name if s else rec.symbol
+                if s:
+                    stock_info[rec.symbol] = {
+                        "name": s.name,
+                        "industry": s.industry,
+                        "market_cap": s.market_cap,
+                        "pe_ttm": s.pe_ttm,
+                        "pb": s.pb,
+                        "roe": s.roe,
+                        "dividend_yield": s.dividend_yield,
+                    }
+                else:
+                    stock_info[rec.symbol] = {
+                        "name": rec.symbol,
+                        "industry": None,
+                        "market_cap": None,
+                        "pe_ttm": None,
+                        "pb": None,
+                        "roe": None,
+                        "dividend_yield": None,
+                    }
 
         # Group by risk level
         sections_data = {"low": [], "medium": [], "high": []}
@@ -104,9 +123,10 @@ def get_recommendations(
             if risk not in sections_data:
                 risk = "medium"
 
+            info = stock_info.get(rec.symbol, {"name": rec.symbol, "industry": None, "market_cap": None, "pe_ttm": None, "pb": None, "roe": None, "dividend_yield": None})
             item = StockRecommendationItem(
                 symbol=rec.symbol,
-                name=stock_repo.get(rec.symbol, rec.symbol),
+                name=info["name"],
                 current_price=rec.current_price,
                 price_change_pct=rec.price_change_pct,
                 predicted_return=rec.predicted_return,
@@ -116,9 +136,14 @@ def get_recommendations(
                 composite_score=rec.composite_score,
                 rank=rec.rank,
                 risk_level=rec.risk_level,
-                market_cap=rec.market_cap,
+                market_cap=info["market_cap"],
                 holding_period=rec.holding_period,
                 ai_summary=rec.ai_summary,
+                industry=info["industry"],
+                pe=info["pe_ttm"],
+                pb=info["pb"],
+                roe=info["roe"],
+                dividend_yield=info["dividend_yield"],
             )
             sections_data[risk].append(item)
 
@@ -136,10 +161,27 @@ def get_recommendations(
                     )
                 )
 
+        # Build real market summary from latest index data
+        latest_index = (
+            session.query(MarketIndex)
+            .filter(MarketIndex.index_code == "sh000001")
+            .order_by(MarketIndex.trade_date.desc())
+            .first()
+        )
+        if latest_index and latest_index.close is not None:
+            market_summary = MarketSummary(
+                index_name="上证指数",
+                index_value=latest_index.close,
+                change_pct=latest_index.pct_change,
+                market_status="open",
+            )
+        else:
+            market_summary = MarketSummary()
+
         return RecommendationsResponse(
             date=date.today(),
             generated_at=datetime.utcnow(),
-            market_summary=MarketSummary(),
+            market_summary=market_summary,
             sections=sections,
         ).model_dump()
     finally:

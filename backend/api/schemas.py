@@ -80,6 +80,11 @@ class StockRecommendationItem(BaseModel):
     market_cap: Optional[int] = None
     holding_period: Optional[str] = None
     ai_summary: Optional[str] = None
+    industry: Optional[str] = None
+    pe: Optional[float] = None
+    pb: Optional[float] = None
+    roe: Optional[float] = None
+    dividend_yield: Optional[float] = None
 
 
 class RiskSection(BaseModel):

@@ -14,8 +14,15 @@ class ParquetStore:
             self.base_path = Path(__file__).resolve().parent.parent.parent / base_path
         self.compression = compression
 
+    @staticmethod
+    def _norm_symbol(symbol: str) -> str:
+        """Normalize symbol to canonical sh.600036 format for directory naming."""
+        if "." not in symbol and len(symbol) >= 8:
+            symbol = symbol[:2] + "." + symbol[2:]
+        return symbol
+
     def _kline_dir(self, symbol: str) -> Path:
-        return self.base_path / "kline" / symbol
+        return self.base_path / "kline" / self._norm_symbol(symbol)
 
     def _kline_file(self, symbol: str, year: int) -> Path:
         return self._kline_dir(symbol) / f"{year}.parquet"
