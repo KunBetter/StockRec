@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http*)",
+      "Bash(npx tsc --noEmit *)",
+      "Bash(open http*)"
+    ]
+  }
+}

@@ -91,7 +91,8 @@
       "Bash(curl -s http://localhost:8000/api/v1/recommendations)",
       "Bash(curl -s --max-time 3 http://localhost:5173)",
       "Bash(curl -s --max-time 3 http://localhost:5173/api/v1/recommendations)",
-      "Bash(curl -s --max-time 15 http://localhost:8000/api/v1/market/overview)"
+      "Bash(curl -s --max-time 15 http://localhost:8000/api/v1/market/overview)",
+      "Skill(fewer-permission-prompts)"
     ]
   }
 }
