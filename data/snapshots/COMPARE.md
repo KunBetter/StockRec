@@ -20,3 +20,14 @@ source .venv/bin/activate && python3 scripts/compare_snapshots.py \
 | 风险迁移 | 风险等级（低/中/高）的变化 |
 | 价格涨跌 | 期间价格和涨跌幅变化 |
 | AI 摘要 | AI 观点的变化 |
+
+---
+
+## 快照清单
+
+| 文件 | 日期 | 内容 |
+|------|------|------|
+| [returns_top50_2026-06-27.md](returns_top50_2026-06-27.md) | 2026-06-27 | A股近1年涨幅排行 TOP 50（MD格式） |
+| [returns_top50_2026-06-27.json](returns_top50_2026-06-27.json) | 2026-06-27 | A股近1年涨幅排行 TOP 50（JSON格式） |
+| [recommendations_2026-06-20.json](recommendations_2026-06-20.json) | 2026-06-20 | 当日推荐结果快照 |
+| [recommendations_2026-06-20.txt](recommendations_2026-06-20.txt) | 2026-06-20 | 当日推荐结果快照（文本） |
